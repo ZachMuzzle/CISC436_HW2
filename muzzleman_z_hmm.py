@@ -24,7 +24,6 @@ def trans_mat(mat):
 #CREATES EMISSION MATRIX
 def emiss_mat(observations, states):
     data = pd.DataFrame([states,observations]).T
-    print(data)
     data.columns = ['States','Observations']
     matrix = pd.crosstab(data.States,data.Observations,normalize=0)
 
@@ -35,7 +34,6 @@ def viterbi(y, a, b):
     states = ['+', '-']
     states_dic = {'+': 0, '-': 1}
     sequence_syms = {'A': 0, 'C': 1, 'G': 2, 'T':3}
-    print(a)
     # node values stored during viterbi forward algorithm
     node_values = np.zeros((len(states), len(y)))
 
@@ -79,24 +77,73 @@ def viterbi(y, a, b):
 
     max_likely_states = max_likely_states[::-1]
     #[print(x) for x in max_likely_states]
-    [print(max_likely_states[x]) for x in range(100)]
+    #[print(max_likely_states[x]) for x in range(100)]
     return max_likely_states
+#Calculates predicted valuse vs true
+def calculate_predicted_values(predicted_test, predicted_true):
+
+    TP_counter = 0
+    TN_counter = 0
+    FP_counter = 0
+    FN_counter = 0
+
+    for i in range(len(predicted_true)):
+        if ((predicted_test[i] == '+') and (predicted_true[i] == '+')):
+            TP_counter += 1
+        elif ((predicted_test[i] == '-') and (predicted_true[i] == '-')):
+            TN_counter += 1
+        elif ((predicted_test[i] == '+') and (predicted_true[i] == '-')):
+            FP_counter += 1
+        else:
+            FN_counter += 1
+    return TP_counter,TN_counter,FP_counter,FN_counter
+
+#RECALL
+def R_Prediction(TP,FN):
+    value = TP / (TP + FN)
+
+    return value
+
+#PRECISION
+def P_Prediction(TP,FN):
+    value = TP / (TP + FP)
+
+    return value
+
+#ACCURACY
+def A_Prediction(TP,TN,FN,FP):
+    value = (TP + TN) / (TP + TN + FN + FP)
+
+    return value
 
 #CREATES A WHOLE NEW LIST WITH A FUNCTION ORGNIZE_LIST WHICH REMOVES COMMAS,QUOTES,ETC
 def new_list(items):
     counter = 0
     new_list = []
+    #print(len(items))
+    if (len(items)) == 100:
+        while(counter != 100):
+            #print("COUNTER is: ", counter)
+            new_items = items[counter]
+            #print("COUNTER is:",counter)
+            items_sub = list(new_items)
+            new_list.append(items_sub)
 
-    while(counter != 100):
-        #print("COUNTER is: ", counter)
-        new_items = items[counter]
-        #print("COUNTER is:",counter)
-        items_sub = list(new_items)
-        new_list.append(items_sub)
+            counter += 1
 
-        counter += 1
+        orginezed_lst = orgnize_lst(new_list)
 
-    orginezed_lst = orgnize_lst(new_list)
+    else:
+        while(counter != 10):
+            new_items = items[counter]
+
+            items_sub = list(new_items)
+
+            new_list.append(items_sub)
+
+            counter += 1
+
+        orginezed_lst = orgnize_lst(new_list)
 
     return orginezed_lst
 
@@ -105,42 +152,49 @@ def orgnize_lst(lst):
     foo = str(lst)
     string_states = foo.replace('[','').replace(']','') # removes all brackets
 
-    print("################### WHOLE NEW LIST ###################")
+    #print("################### WHOLE NEW LIST ###################")
     li = re.split(r'[,]+\s+',string_states) # removes commas, spaces, etc. Creates new list
-    print(li)
+    #print(li)
     li2 = [ast.literal_eval(x) for x in li] # removes double quotes
 
     return li2
 
-#TODO: Need to add in second input(test). Also only get the model(transition matrix) and (emission matrix) for train
-#      and for test use those models to use the viterbi algorithm on the test and compare the actual given value to
-#      the predicted.
 if __name__ == "__main__":
-    file_input = sys.argv[1]
-    observations, states = input_file(file_input)
-
-   # trans_matrix = trans_mat(states)
-    #print(trans_matrix)
-
-    print("################################ OBSERVATIONS #############################")
-    print(observations)
-    #print(len(observations))
-    print("################################ STATES ###################################")
-    print(states)
+    file_input_train = sys.argv[1]
+    file_input_test = sys.argv[2]
+    observations, states = input_file(file_input_train)
+    observations_test, states_test = input_file(file_input_test)
 
     new_states = new_list(states)
     new_observations = new_list(observations)
-    print(new_states)
-    print(new_states[0])
-    print(new_states[1])
-    print(new_observations)
-    print(new_observations[0])
-    print(new_observations[1])
-    print(new_observations[2])
+    new_states_test = new_list(states_test)
+    new_observations_test = new_list(observations_test)
 
+    # FOR TESTING PURPOSES
+    """
+    print("################################ OBSERVATIONS #############################")
+    print(observations)
+    print("################################ STATES ###################################")
+    print(states)
+
+    #new for train data
+    print("################### WHOLE NEW LIST ###################")
+    print(new_states)
+    print("################### WHOLE NEW LIST ###################")
+    print(new_observations)
+
+    print("################### WHOLE NEW LIST ###################")
+    #new for test data
+    print(new_states_test)
+    print("################### WHOLE NEW LIST ###################")
+    print(new_observations_test)
+    """
+
+
+    #Probilities of first 100 states
+    """
     counter = 0
     counter2 = 0
-    #Probilities of first 100 states
     for i in range(0,100):
         if new_states[i] == '+':
             counter += 1
@@ -151,53 +205,37 @@ if __name__ == "__main__":
 
     print(plus_prob,"\n",minus_prob,"\n")
     """
-    if new_states[0] == '+':
-        print("CORRECT")
-    else:
-        print("NOT CORRECT")
 
-    if new_observations[0] == 'A':
-        print("CORRECT")
-    else:
-        print("NOT CORRECT")
-    """
     trans_matrix = trans_mat(new_states)
     print("#################### TRANSITION MATRIX ###############")
     print(trans_matrix)
     emission_matrix = emiss_mat(new_observations,new_states)
-    emission_matrix_np = emission_matrix.to_numpy()
+
     print("################# EMISSION MATRIX #################")
     print(emission_matrix)
-    print(emission_matrix_np)
-    np_o =np.array(new_observations)
-    print(new_observations[0])
-    new_ob_len = len(new_observations)
-    print(new_ob_len)
-    # Changes observations into numbers
-    print(new_observations)
-    """
-    for i in range(new_ob_len):
-        if new_observations[i] == 'A':
-            new_observations[i] = 0
-        elif new_observations[i] == 'C':
-            new_observations[i] = 1
-        elif new_observations[i] == 'G':
-            new_observations[i] = 2
-        elif new_observations[i] == 'T':
-            new_observations[i] = 3
-    """
+
+   #Set values up to read changed to numpy arrays
     new_observations = np.array(new_observations)
     trans_matrix = trans_matrix.to_numpy()
     emission_matrix = emission_matrix.to_numpy()
 
-    x = viterbi(new_observations,trans_matrix,emission_matrix)
-    for i in range(0,100):
-       print(x[i])
+    new_observations_test = np.array(new_observations_test)
+    #Call viterbi returns a list of predicted states
+    x = viterbi(new_observations_test,trans_matrix,emission_matrix)
 
-    #pprint(x.tolist())
-   # print(states[0]) # First element of list e.g +-++---
-    #states_sub = states[0]
-    #print(states_sub[::1]) #First element of sub-list e.g +
-    #print(list(states_sub))
-    #print(len(states))
+    #Set Values for scores
+    TP,TN,FP,FN = calculate_predicted_values(x,new_states_test)
+
+    #Call scoring functions
+    recall = R_Prediction(TP,FN)
+    precision = P_Prediction(TP,FP)
+    accuracy = A_Prediction(TP,TN,FN,FP)
+    F1 = 2 * (((P_Prediction(TP,FP)) * R_Prediction(TP,FN)) / ((P_Prediction(TP,FP)) + (R_Prediction(TP,FN))))
+
+    #Print scores
+    print("RECALL:", recall)
+    print("PRECISION:", precision)
+    print("ACCURACY:", accuracy)
+    print("F1:", F1)
+
 
